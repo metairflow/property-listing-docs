@@ -97,7 +97,7 @@ Relasi utama adalah sebagai berikut:
 | **API Gateway**              | Kong                          |
 | **Core Service**             | Node.js, Express.js, Prisma   |
 | **Prediction Service**       | Python, FastAPI, Scikit-learn |
-| **Database**                 | PostgreSQL                    |
+| **Database**                 | SQlite                        |
 | **Containerization**         | Docker, Docker Compose        |
 | **Orchestration (Produksi)** | Kubernetes                    |
 
