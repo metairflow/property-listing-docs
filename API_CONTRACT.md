@@ -1,45 +1,42 @@
-# Dokumen Kontrak API: Proyek RENTVERSE
+# API Contract Documentation: RENTVERSE Project
 
-**Versi: 1.0**
-**Tanggal: 8 September 2025**
-**Status: Draf Awal**
-
----
-
-## 1. Pengantar
-
-### 1.1. Tujuan Dokumen
-
-Dokumen ini berfungsi sebagai "satu sumber kebenaran" (_single source of truth_) untuk semua interaksi antar layanan dalam ekosistem RENTVERSE. Ini mendefinisikan secara ketat setiap endpoint API, termasuk metode, struktur data permintaan (_request_), dan struktur data respons (_response_). Tujuannya adalah untuk memungkinkan tim frontend dan backend bekerja secara paralel dengan pemahaman yang sama dan mengurangi risiko kesalahan integrasi.
-
-### 1.2. Format Spesifikasi
-
-Spesifikasi ini ditulis menggunakan **OpenAPI Specification (OAS) versi 3.0.0** dalam format **YAML**. YAML dipilih karena lebih mudah dibaca oleh manusia dibandingkan JSON.
+**Version: 2.0**
+**Date: September 9, 2025**
+**Status: Approved for Implementation**
 
 ---
 
-## 2. Spesifikasi OpenAPI Lengkap
+## 1. Introduction
 
-Berikut adalah definisi lengkap untuk semua layanan backend yang akan dibangun.
+### 1.1. Document Purpose
+
+This document is the single source of truth for all API interactions within the RENTVERSE ecosystem. It provides a strict definition for every endpoint, including methods, request structures, and response schemas. Its purpose is to enable parallel development between frontend and backend teams and minimize integration errors.
+
+### 1.2. Specification Format
+
+This specification is written using **OpenAPI Specification (OAS) v3.0.0** in **YAML** format for human readability.
+
+---
+
+## 2. OpenAPI Specification (Version 2.0)
+
+This specification reflects the expanded features including user profiles, reviews, favorites, and document uploads.
 
 ```yaml
 openapi: "3.0.0"
 info:
-  title: RENTVERSE API
-  description:
-    API terpadu untuk platform RENTVERSE, mencakup Properti, Pengguna,
-    dan Prediksi Harga. Didesain dengan pendekatan microservices hibrida.
-  version: 1.0.0
+  title: RENTVERSE API v2.0
+  description: An updated, comprehensive API for the RENTVERSE platform, supporting an expanded feature set including reviews, favorites, and document verification.
+  version: 2.0.0
 servers:
   - url: http://localhost:8080/api
-    description: Server Pengembangan Lokal via API Gateway
+    description: Local Development Server via API Gateway
 paths:
+  # --- Authentication & User Management ---
   /auth/register:
     post:
-      summary: Mendaftarkan pengguna baru
-      tags:
-        - Authentication
-      operationId: registerUser
+      summary: Register a new user
+      tags: [Authentication]
       requestBody:
         required: true
         content:
@@ -48,29 +45,17 @@ paths:
               $ref: "#/components/schemas/UserRegister"
       responses:
         "201":
-          description: Pengguna berhasil dibuat
+          description: User created successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserResponse"
-        "400":
-          description: Permintaan buruk (misalnya, data tidak valid)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "409":
-          description: Konflik (misalnya, email sudah ada)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          description: Email already exists
   /auth/login:
     post:
-      summary: Login pengguna
-      tags:
-        - Authentication
-      operationId: loginUser
+      summary: Log in a user
+      tags: [Authentication]
       requestBody:
         required: true
         content:
@@ -79,48 +64,74 @@ paths:
               $ref: "#/components/schemas/UserLogin"
       responses:
         "200":
-          description: Login berhasil, mengembalikan access token
+          description: Login successful, returns access token
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  accessToken:
-                    type: string
-                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                $ref: "#/components/schemas/LoginResponse"
         "401":
-          description: Kredensial tidak valid
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /projects:
+          description: Invalid credentials
+  /users/me:
     get:
-      summary: Mendapatkan semua proyek untuk auto-fill
-      tags:
-        - Projects
-      operationId: getAllProjects
-      security:
-        - bearerAuth: []
+      summary: Get current user's profile
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
       responses:
         "200":
-          description: Daftar proyek
+          description: User profile data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+    patch:
+      summary: Update current user's profile
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdate"
+      responses:
+        "200":
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+
+  # --- Property & Project Management ---
+  /projects:
+    get:
+      summary: Get all projects for auto-fill
+      tags: [Projects]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: A list of projects
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: "#/components/schemas/ProjectSummary"
-        "401":
-          description: Tidak terautentikasi
   /properties:
+    get:
+      summary: Get all approved properties (for public view)
+      tags: [Properties]
+      responses:
+        "200":
+          description: A list of public properties
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PropertySummary"
     post:
-      summary: Mengajukan listing properti baru
-      tags:
-        - Properties
-      operationId: createProperty
-      security:
-        - bearerAuth: []
+      summary: Submit a new property listing
+      tags: [Properties]
+      security: [{ bearerAuth: [] }]
       requestBody:
         required: true
         content:
@@ -129,51 +140,57 @@ paths:
               $ref: "#/components/schemas/PropertyCreate"
       responses:
         "201":
-          description: Properti berhasil dibuat
+          description: Property submitted for approval
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PropertyResponse"
-        "400":
-          description: Data input tidak valid
-        "401":
-          description: Tidak terautentikasi
-  /properties/pending:
+                $ref: "#/components/schemas/PropertyDetailed"
+  /properties/{id}:
     get:
-      summary: Mendapatkan semua properti yang menunggu persetujuan
-      tags:
-        - Properties
-      operationId: getPendingProperties
-      security:
-        - bearerAuth: []
+      summary: Get details for a single property
+      tags: [Properties]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
       responses:
         "200":
-          description: Daftar properti yang menunggu persetujuan
+          description: Detailed property information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyDetailed"
+        "404":
+          description: Property not found
+
+  # --- Admin Endpoints ---
+  /admin/properties/pending:
+    get:
+      summary: Get all properties awaiting approval
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: A list of pending properties
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/PropertyResponse"
-        "401":
-          description: Tidak terautentikasi
+                  $ref: "#/components/schemas/PropertySummary"
         "403":
-          description: Tidak memiliki izin (bukan Admin)
-  /properties/{id}/status:
+          description: Forbidden (user is not an Admin)
+  /admin/properties/{id}/status:
     patch:
-      summary: Menyetujui atau menolak properti
-      tags:
-        - Properties
-      operationId: updatePropertyStatus
-      security:
-        - bearerAuth: []
+      summary: Approve or reject a property
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
       parameters:
         - in: path
           name: id
           required: true
-          schema:
-            type: integer
-          description: ID dari properti yang akan diupdate
+          schema: { type: integer }
       requestBody:
         required: true
         content:
@@ -182,242 +199,242 @@ paths:
               $ref: "#/components/schemas/StatusUpdate"
       responses:
         "200":
-          description: Status properti berhasil diperbarui
+          description: Property status updated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PropertyResponse"
-        "401":
-          description: Tidak terautentikasi
-        "403":
-          description: Tidak memiliki izin (bukan Admin)
-        "404":
-          description: Properti tidak ditemukan
-  /predict:
+                $ref: "#/components/schemas/PropertyDetailed"
+
+  # --- New Feature Endpoints ---
+  /properties/{id}/favorite:
     post:
-      summary: Memprediksi harga sewa
-      tags:
-        - Prediction
-      operationId: predictPrice
-      security:
-        - bearerAuth: []
+      summary: Add a property to favorites
+      tags: [Favorites]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Property added to favorites
+    delete:
+      summary: Remove a property from favorites
+      tags: [Favorites]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Property removed from favorites
+  /properties/{id}/reviews:
+    post:
+      summary: Submit a review for a property
+      tags: [Reviews]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PredictionRequest"
+              $ref: "#/components/schemas/ReviewCreate"
       responses:
-        "200":
-          description: Prediksi harga berhasil
+        "201":
+          description: Review submitted successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PredictionResponse"
+                $ref: "#/components/schemas/ReviewResponse"
+  /uploads/signed-url:
+    get:
+      summary: Get a secure URL for file uploads
+      tags: [Uploads]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: fileName
+          required: true
+          schema: { type: string }
+        - in: query
+          name: fileType
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Secure upload URL provided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignedUrlResponse"
+
 components:
-  schemas:
-    UserRegister:
-      type: object
-      required:
-        - fullName
-        - email
-        - password
-        - role
-      properties:
-        fullName:
-          type: string
-          example: Budi Santoso
-        email:
-          type: string
-          format: email
-          example: budi.s@example.com
-        password:
-          type: string
-          format: password
-          example: MySecurePassword123
-        role:
-          type: string
-          enum: [AGENT, ADMIN, OWNER, TENANT]
-          example: AGENT
-    UserLogin:
-      type: object
-      required:
-        - email
-        - password
-      properties:
-        email:
-          type: string
-          format: email
-          example: budi.s@example.com
-        password:
-          type: string
-          format: password
-          example: MySecurePassword123
-    UserResponse:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        fullName:
-          type: string
-          example: Budi Santoso
-        email:
-          type: string
-          example: budi.s@example.com
-        role:
-          type: string
-          example: AGENT
-    ProjectSummary:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        projectName:
-          type: string
-          example: Tijani Raja Dewa - Apartments
-    PropertyCreate:
-      type: object
-      required:
-        - title
-        - propertyType
-        - rentalPrice
-        - sizeSqft
-        - projectId
-      properties:
-        title:
-          type: string
-          example: Studio Penthouse for rent at Tijani Raja Dewa
-        description:
-          type: string
-          example: A beautiful penthouse with a city view...
-        propertyType:
-          type: string
-          enum: [APARTMENT, HOUSE, PENTHOUSE, STUDIO]
-          example: PENTHOUSE
-        rentalPrice:
-          type: number
-          example: 2130000
-        sizeSqft:
-          type: number
-          example: 1120
-        bedrooms:
-          type: number
-          example: 1
-        bathrooms:
-          type: number
-          example: 1
-        furnishingStatus:
-          type: string
-          enum: [UNFURNISHED, PARTIALLY_FURNISHED, FULLY_FURNISHED]
-          example: FULLY_FURNISHED
-        projectId:
-          type: integer
-          example: 1
-    PropertyResponse:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 101
-        title:
-          type: string
-          example: Studio Penthouse for rent at Tijani Raja Dewa
-        status:
-          type: string
-          enum: [PENDING, APPROVED, REJECTED, RENTED]
-          example: PENDING
-        rentalPrice:
-          type: number
-          example: 2130000
-        sizeSqft:
-          type: number
-          example: 1120
-        listedDate:
-          type: string
-          format: date-time
-          example: "2025-09-08T10:00:00Z"
-    StatusUpdate:
-      type: object
-      required:
-        - status
-      properties:
-        status:
-          type: string
-          enum: [APPROVED, REJECTED]
-          example: APPROVED
-    PredictionRequest:
-      type: object
-      required:
-        - sizeSqft
-        - bedrooms
-        - bathrooms
-        - propertyType
-        - furnishingStatus
-        - location
-      properties:
-        sizeSqft:
-          type: number
-          example: 1120
-        bedrooms:
-          type: number
-          example: 1
-        bathrooms:
-          type: number
-          example: 1
-        propertyType:
-          type: string
-          example: PENTHOUSE
-        furnishingStatus:
-          type: string
-          example: FULLY_FURNISHED
-        location:
-          type: string
-          example: Kelantan
-    PredictionResponse:
-      type: object
-      properties:
-        predictedPrice:
-          type: number
-          example: 2250000
-        confidenceScore:
-          type: number
-          example: 0.85
-        priceRange:
-          type: array
-          items:
-            type: number
-          example: [2100000, 2400000]
-    ErrorResponse:
-      type: object
-      properties:
-        message:
-          type: string
-          example: Email already exists.
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  schemas:
+    # --- User Schemas ---
+    UserRegister:
+      type: object
+      required: [fullName, email, password, role]
+      properties:
+        fullName: { type: string, example: "Budi Siregar" }
+        email:
+          { type: string, format: email, example: "budi.siregar@example.com" }
+        password:
+          { type: string, format: password, example: "SecurePassword123" }
+        role: { type: string, enum: [PROPERTY_OWNER, TENANT] }
+    UserLogin:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+    LoginResponse:
+      type: object
+      properties:
+        accessToken: { type: string }
+    UserResponse:
+      type: object
+      properties:
+        id: { type: integer }
+        fullName: { type: string }
+        email: { type: string }
+        phone: { type: string, nullable: true }
+        country: { type: string, nullable: true }
+        profilePictureUrl: { type: string, nullable: true }
+        role: { type: string, enum: [PROPERTY_OWNER, TENANT, ADMIN] }
+    UserProfileUpdate:
+      type: object
+      properties:
+        fullName: { type: string }
+        phone: { type: string }
+        country: { type: string }
+        profilePictureUrl: { type: string }
+
+    # --- Property & Project Schemas ---
+    ProjectSummary:
+      type: object
+      properties:
+        id: { type: integer }
+        projectName: { type: string }
+    PropertyCreate:
+      type: object
+      required: [title, listingType, propertyType, sizeSqft]
+      properties:
+        title: { type: string }
+        description: { type: string }
+        listingType: { type: string, enum: [SALE, RENT, BOTH] }
+        propertyType:
+          { type: string, enum: [APARTMENT, HOUSE, PENTHOUSE, STUDIO] }
+        rentalPrice: { type: number, nullable: true }
+        salePrice: { type: number, nullable: true }
+        maintenanceFee: { type: number, nullable: true }
+        sizeSqft: { type: integer }
+        bedrooms: { type: integer }
+        bathrooms: { type: integer }
+        furnishingStatus:
+          {
+            type: string,
+            enum: [UNFURNISHED, PARTIALLY_FURNISHED, FULLY_FURNISHED],
+          }
+        projectId: { type: integer, nullable: true }
+        ownershipDocumentUrl:
+          {
+            type: string,
+            format: uri,
+            description: "URL from signed-url endpoint",
+          }
+    PropertySummary:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        rentalPrice: { type: number, nullable: true }
+        salePrice: { type: number, nullable: true }
+        bedrooms: { type: integer }
+        bathrooms: { type: integer }
+        sizeSqft: { type: integer }
+        imageUrl: { type: string, format: uri } # Primary image
+    PropertyDetailed:
+      allOf:
+        - $ref: "#/components/schemas/PropertySummary"
+        - type: object
+          properties:
+            description: { type: string }
+            listingType: { type: string, enum: [SALE, RENT, BOTH] }
+            propertyType:
+              { type: string, enum: [APARTMENT, HOUSE, PENTHOUSE, STUDIO] }
+            furnishingStatus:
+              {
+                type: string,
+                enum: [UNFURNISHED, PARTIALLY_FURNISHED, FULLY_FURNISHED],
+              }
+            status:
+              {
+                type: string,
+                enum: [PENDING, APPROVED, REJECTED, RENTED, SOLD],
+              }
+            images:
+              type: array
+              items:
+                type: object
+                properties:
+                  id: { type: integer }
+                  imageUrl: { type: string }
+            reviews:
+              type: array
+              items:
+                $ref: "#/components/schemas/ReviewResponse"
+    StatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [APPROVED, REJECTED] }
+
+    # --- Review & Favorite Schemas ---
+    ReviewCreate:
+      type: object
+      required: [rating]
+      properties:
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        comment: { type: string, nullable: true }
+    ReviewResponse:
+      type: object
+      properties:
+        id: { type: integer }
+        rating: { type: integer }
+        comment: { type: string, nullable: true }
+        author:
+          type: object
+          properties:
+            fullName: { type: string }
+            profilePictureUrl: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    # --- Upload Schema ---
+    SignedUrlResponse:
+      type: object
+      properties:
+        uploadUrl:
+          { type: string, description: "The pre-signed URL to PUT the file to" }
+        fileUrl:
+          {
+            type: string,
+            description: "The final URL of the file after upload",
+          }
+
+    ErrorResponse:
+      type: object
+      properties:
+        message: { type: string }
 ```
-
-## 3. Catatan Implementasi Kunci
-
-### 3.1. Alur Autentikasi
-
-Sistem akan menggunakan JSON Web Tokens (JWT) untuk autentikasi.
-
-Klien (Frontend) akan mengirimkan email dan password ke endpoint /auth/login.
-
-Server akan merespons dengan sebuah accessToken.
-
-Untuk semua permintaan ke endpoint yang terlindungi, klien harus menyertakan token ini di dalam Authorization header dengan skema Bearer. Contoh: Authorization: Bearer <token>.
-
-API Gateway (Kong) akan bertanggung jawab untuk memvalidasi token ini sebelum meneruskan permintaan ke layanan internal.
-
-### 3.2. Penanganan Error
-
-Setiap respons error akan mengikuti skema ErrorResponse yang didefinisikan di atas, yang berisi sebuah field message untuk memberikan umpan balik yang jelas kepada klien.
-
-Kode status HTTP yang sesuai akan digunakan untuk setiap jenis error (misalnya 400 untuk input buruk, 401 untuk tidak terautentikasi, 403 untuk tidak diizinkan, 404 untuk tidak ditemukan).
