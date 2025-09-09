@@ -1,106 +1,118 @@
-# Dokumen Analisis dan Perancangan Sistem: Proyek RENTVERSE
+# Implementation Roadmap: RENTVERSE Project
 
-**Versi: 1.0**
-**Tanggal: 8 September 2025**
-**Status: Draf Awal**
-
----
-
-## 1. Ringkasan Proyek
-
-### 1.1. Tujuan
-
-Proyek RENTVERSE bertujuan untuk membangun sebuah platform properti terpadu yang menyatukan tiga fungsionalitas utama dari tantangan yang diberikan:
-
-1.  **Manajemen Listing Properti**: Termasuk alur pengajuan oleh agen dan persetujuan oleh admin.
-2.  **Simulator Harga Sewa**: Memberikan rekomendasi harga sewa secara _real-time_ menggunakan model Machine Learning.
-3.  **Generator Kontrak Sewa**: Mengotomatisasi pembuatan dokumen perjanjian sewa.
-
-### 1.2. Arsitektur yang Diusulkan
-
-Aplikasi ini akan dibangun menggunakan pendekatan arsitektur **microservices hibrida**. Pendekatan ini dipilih untuk menyeimbangkan antara kecepatan pengembangan awal dan skalabilitas jangka panjang. Logika bisnis inti akan disatukan dalam satu layanan monolitik (_Core Service_), sementara fungsionalitas yang sangat terspesialisasi (seperti prediksi harga) akan diisolasi menjadi layanan mikro (_microservice_) sendiri.
+**Version: 2.0**
+**Date: September 9, 2025**
+**Status: Approved for Development**
 
 ---
 
-## 2. Analisis Fungsional (User Stories)
+## 1. Introduction
 
-Berikut adalah rincian fungsionalitas utama dari sudut pandang setiap peran pengguna (aktor).
+### 1.1. Document Purpose
 
-### 2.1. Pengguna Publik (Calon Penyewa)
+This document outlines the strategic, phased implementation plan for the RENTVERSE project. It breaks down the development process into logical stages, each with clear objectives and deliverables. This roadmap will guide the development team from the initial setup to the final, feature-complete application.
 
-- **Sebagai pengguna publik**, saya ingin mencari dan memfilter properti berdasarkan lokasi, tipe, dan harga, agar saya dapat menemukan properti yang relevan dengan cepat.
-- **Sebagai pengguna publik**, saya ingin melihat halaman detail properti yang menampilkan galeri foto, deskripsi lengkap, fasilitas, dan informasi harga, agar saya bisa membuat keputusan sewa.
-- **Sebagai pengguna publik**, saya ingin dapat mengisi formulir kontak untuk bertanya lebih lanjut tentang properti kepada agen.
+### 1.2. Development Methodology
 
-### 2.2. Agen Properti (Peran: `AGENT`)
-
-- **Sebagai agen**, saya ingin dapat mendaftar dan login ke dalam sistem, agar saya bisa mengakses dasbor pribadi saya.
-- **Sebagai agen**, saya ingin dapat mengajukan properti baru melalui formulir yang interaktif, agar proses input data menjadi efisien.
-- **Sebagai agen**, saya ingin menggunakan fitur **auto-fill** yang mengambil data dari proyek yang sudah ada, untuk mempercepat pengisian data umum.
-- **Sebagai agen**, saat mengisi formulir, saya ingin mendapatkan **rekomendasi harga sewa** dari sistem, agar saya bisa menetapkan harga yang kompetitif.
-- **Sebagai agen**, saya ingin melihat daftar properti yang telah saya ajukan beserta statusnya (Menunggu Persetujuan, Disetujui, Ditolak).
-
-### 2.3. Admin (Peran: `ADMIN`)
-
-- **Sebagai admin**, saya ingin dapat login ke dasbor admin khusus.
-- **Sebagai admin**, saya ingin melihat daftar semua properti yang diajukan oleh agen dan masih menunggu persetujuan.
-- **Sebagai admin**, saya ingin dapat meninjau detail setiap properti yang diajukan.
-- **Sebagai admin**, saya ingin memiliki kemampuan untuk **menyetujui** atau **menolak** sebuah listing properti, agar kualitas konten yang tampil di publik terjaga.
+The project will follow an iterative, MVP-first (Minimum Viable Product) approach. We will build and stabilize the core functionality first before layering on more advanced and auxiliary features.
 
 ---
 
-## 3. Analisis Arsitektur Sistem
+## 2. Phased Implementation Plan
 
-Sistem akan terdiri dari beberapa komponen utama yang bekerja secara independen namun terkoordinasi.
+### Phase 1: MVP - Core Listing Workflow
 
-- **Frontend (Next.js)**: Satu aplikasi antarmuka pengguna yang akan digunakan oleh semua aktor. Bertindak sebagai _gateway_ visual ke seluruh sistem.
-- **API Gateway (Kong)**: Satu titik masuk (_single entry point_) untuk semua permintaan dari frontend. Bertugas untuk merutekan permintaan ke layanan yang tepat, serta menangani keamanan dan otentikasi awal.
-- **Core Service (Express.js)**: Layanan monolitik yang menangani mayoritas logika bisnis, termasuk:
-  - Manajemen Pengguna (Auth Service)
-  - Manajemen Properti (Property Service)
-  - Manajemen Dokumen (Document Service)
-- **Prediction Service (FastAPI)**: Layanan mikro spesialis yang terisolasi, khusus untuk menangani komputasi prediksi harga sewa.
+**Goal**: To build the absolute essential functionality allowing a `PROPERTY_OWNER` to register, log in, and successfully submit a new property listing with an ownership document.
 
----
+**Key Tasks**:
 
-## 4. Desain Database
+1.  **Project Setup**:
 
-Database akan menggunakan **PostgreSQL** dengan **Prisma** sebagai ORM (Object-Relational Mapping).
+    - Establish repositories for each service (`frontend`, `core-service`, `prediction-service`).
+    - Initialize the `Core Service` (Express.js) and `Frontend` (Next.js) projects.
+    - Configure Docker and Docker Compose for a unified local development environment.
 
-### 4.1. Skema Tabel
+2.  **`Core Service` Development (Backend)**:
 
-| Nama Tabel          | Deskripsi                                             |
-| :------------------ | :---------------------------------------------------- |
-| `Users`             | Menyimpan data semua pengguna dan perannya.           |
-| `Projects`          | Data master untuk proyek properti (sumber auto-fill). |
-| `Properties`        | Data untuk setiap listing properti individual.        |
-| `PropertyImages`    | Menyimpan URL gambar untuk galeri properti.           |
-| `Amenities`         | Data master untuk semua jenis fasilitas.              |
-| `PropertyAmenities` | Tabel penghubung antara Properti dan Fasilitas.       |
-| `RentalAgreements`  | Data untuk kontrak sewa (Challenge 3).                |
+    - Implement the full Version 2.0 database schema using Prisma.
+    - Develop the following core API endpoints:
+      - User registration and login (`/auth/register`, `/auth/login`).
+      - Secure file upload endpoint (`/uploads/signed-url`).
+      - Property submission (`POST /properties`), including logic to create entries in `Properties` and `PropertyDocuments`.
+      - Fetch projects for auto-fill (`GET /projects`).
 
-### 4.2. Relasi Antar Tabel
+3.  **`Frontend` Development (UI)**:
+    - Build the Registration and Login pages based on the Figma designs.
+    - Implement the full Property Submission Form component, including the two-step file upload process.
+    - Integrate the form with the backend APIs.
+    - Implement client-side state management for user authentication and form data.
 
-Relasi utama adalah sebagai berikut:
-
-- Sebuah `Property` terhubung ke satu `Project`.
-- Sebuah `Property` diajukan oleh satu `User` (Agent) dan disetujui oleh satu `User` (Admin).
-- Sebuah `Property` bisa memiliki banyak `PropertyImages` dan `PropertyAmenities`.
+**Expected Outcome for Phase 1**: A functional application where a property owner can create an account and submit a complete property listing for admin review.
 
 ---
 
-## 5. Tumpukan Teknologi (Tech Stack)
+### Phase 2: Admin Approval and Verification Workflow
 
-| Komponen                     | Teknologi yang Diusulkan      |
-| :--------------------------- | :---------------------------- |
-| **Frontend**                 | Next.js (React), Tailwind CSS |
-| **API Gateway**              | Kong                          |
-| **Core Service**             | Node.js, Express.js, Prisma   |
-| **Prediction Service**       | Python, FastAPI, Scikit-learn |
-| **Database**                 | SQlite                        |
-| **Containerization**         | Docker, Docker Compose        |
-| **Orchestration (Produksi)** | Kubernetes                    |
+**Goal**: To empower the `ADMIN` role with the tools necessary to moderate and verify new property listings.
+
+**Key Tasks**:
+
+1.  **`Core Service` Updates (Backend)**:
+
+    - Implement role-based authorization middleware to protect admin-only endpoints.
+    - Develop the following admin-specific API endpoints:
+      - Fetch pending properties (`/admin/properties/pending`).
+      - Update property status (`PATCH /admin/properties/{id}/status`).
+      - _(Future)_ Update document verification status.
+
+2.  **`Frontend` Updates (UI)**:
+    - Build the Admin Dashboard page, protected by role-based access.
+    - Create a detailed "Review" page where an admin can see all property details and view the uploaded ownership document.
+    - Implement the functionality for the "Approve" and "Reject" buttons.
+
+**Expected Outcome for Phase 2**: A complete, end-to-end listing and approval workflow. Admins can now effectively manage the quality of content on the platform.
 
 ---
 
-_Dokumen ini akan diperbarui seiring dengan perkembangan proyek._
+### Phase 3: Tenant Engagement Features
+
+**Goal**: To build the features that allow `TENANT` users to interact with the platform, making it a dynamic marketplace.
+
+**Key Tasks**:
+
+1.  **`Core Service` Updates (Backend)**:
+
+    - Develop API endpoints for:
+      - Adding and removing properties from favorites (`POST` & `DELETE /properties/{id}/favorite`).
+      - Submitting reviews (`POST /properties/{id}/reviews`).
+      - Fetching public, `APPROVED` properties (`GET /properties`).
+
+2.  **`Frontend` Updates (UI)**:
+    - Build the public-facing Homepage and Property Search/Listing pages.
+    - Create the detailed Property View page.
+    - Implement the "Add to Favorites" button and the "My Favorites" page in the user dashboard.
+    - Implement the review submission form and the review display section on property pages.
+
+**Expected Outcome for Phase 3**: The platform is now fully interactive for tenants, with core features for browsing, saving, and reviewing properties.
+
+---
+
+### Phase 4: Integration of Advanced Services
+
+**Goal**: To integrate the specialized microservices that complete the full vision of the RENTVERSE platform (Challenge 2 & 3).
+
+**Key Tasks**:
+
+1.  **`Prediction Service` Development (Backend)**:
+
+    - Initialize the FastAPI (Python) project.
+    - Train a baseline Machine Learning model for price prediction.
+    - Develop and deploy the `/predict` API endpoint.
+
+2.  **`Core Service` & `Frontend` Integration**:
+    - Configure the API Gateway (Kong) to route traffic to all services.
+    - Integrate the `/predict` API call into the frontend's Property Submission Form, including a _debounce_ mechanism.
+    - Add logic to the `Core Service` for `RentalAgreement` generation, including PDF creation (e.g., via Puppeteer).
+    - Build the UI on the frontend for initiating and managing rental agreements.
+
+**Expected Outcome for Phase 4**: All three core challenges are fully implemented and integrated, resulting in a feature-complete application ready for its first major release.
