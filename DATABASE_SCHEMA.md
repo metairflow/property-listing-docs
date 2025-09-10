@@ -1,7 +1,7 @@
 # Database Schema Documentation: RENTVERSE Project
 
-**Version: 2.0**
-**Date: September 9, 2025**
+**Version: 2.3**
+**Date: September 10, 2025**
 **Status: Approved for Implementation**
 
 ---
@@ -25,10 +25,9 @@ The following diagram illustrates the relationships between all tables in the da
 
 **Key Relationship Summary:**
 
-- A `User` can have many `Properties`, `Reviews`, and `Favorites`.
-- A `Property` is linked to one `Project` and is submitted by one `User` (a `PROPERTY_OWNER`).
-- A `Property` can have many `PropertyImages`, `Reviews`, `Favorites`, and `PropertyDocuments`.
-- `Properties` and `Amenities` have a many-to-many relationship via the `PropertyAmenities` table.
+- A `Property` has many-to-many relationships with `Amenities`, `Views`, and `FacilityCategories` (via join tables or direct links).
+- A `Property` has one-to-many relationships with `PropertyImages`, `Reviews`, `Favorites`, `PropertyDocuments`, and `NearbyFacilities`.
+- The core relationships between `Users`, `Properties`, and `Projects` remain central to the architecture.
 
 ---
 
@@ -36,6 +35,7 @@ The following diagram illustrates the relationships between all tables in the da
 
 ### 3.1. Table: `Users`
 
+_(No changes from Version 2.0)_
 Stores data for all user roles within the system.
 
 | Column Name         | Data Type     | Description                             | Notes                         |
@@ -53,7 +53,8 @@ Stores data for all user roles within the system.
 
 ### 3.2. Table: `Projects`
 
-Master data for property developments (e.g., apartment buildings, housing complexes). Used for the auto-fill feature.
+_(No changes from Version 2.0)_
+Master data for property developments. Used for the auto-fill feature.
 
 | Column Name      | Data Type  | Description                                | Notes                        |
 | :--------------- | :--------- | :----------------------------------------- | :--------------------------- |
@@ -65,143 +66,101 @@ Master data for property developments (e.g., apartment buildings, housing comple
 
 ### 3.3. Table: `Properties`
 
-The core table containing data for each individual property listing.
+The core table for individual property listings, now with added detail.
 
-| Column Name        | Data Type               | Description                                      | Notes                                   |
-| :----------------- | :---------------------- | :----------------------------------------------- | :-------------------------------------- |
-| `id`               | `Int`                   | Unique identifier for each property.             | Primary Key, Auto-increment.            |
-| `title`            | `String`                | The title of the listing advertisement.          |                                         |
-| `description`      | `Text`                  | A detailed description of the property unit.     |                                         |
-| `listingType`      | `Enum (ListingType)`    | The type of transaction (e.g., Sale, Rent).      | See Enum Definitions.                   |
-| `propertyType`     | `Enum (PropertyType)`   | The category of the property.                    | See Enum Definitions.                   |
-| `rentalPrice`      | `Float`                 | The rental price of the property.                | Optional.                               |
-| `salePrice`        | `Float`                 | The sale price of the property.                  | Optional.                               |
-| `maintenanceFee`   | `Float`                 | The monthly common area maintenance fee.         | Optional.                               |
-| `sizeSqft`         | `Int`                   | The size of the property in square feet.         |                                         |
-| `bedrooms`         | `Int`                   | The number of bedrooms.                          |                                         |
-| `bathrooms`        | `Int`                   | The number of bathrooms.                         |                                         |
-| `furnishingStatus` | `Enum (Furnishing)`     | The furnishing level of the property.            | See Enum Definitions.                   |
-| `status`           | `Enum (PropertyStatus)` | The current workflow status of the listing.      | Default: `PENDING`.                     |
-| `listedById`       | `Int`                   | The ID of the `PROPERTY_OWNER` who submitted it. | Foreign Key -> `Users.id`.              |
-| `projectId`        | `Int`                   | Links the property to its parent project.        | Foreign Key -> `Projects.id`. Optional. |
+| Column Name         | Data Type                  | Description                                      | Notes                                   |
+| :------------------ | :------------------------- | :----------------------------------------------- | :-------------------------------------- |
+| `id`                | `Int`                      | Unique identifier for each property.             | Primary Key, Auto-increment.            |
+| `title`             | `String`                   | The title of the listing advertisement.          |                                         |
+| `description`       | `Text`                     | A detailed description of the property unit.     |                                         |
+| `listingType`       | `Enum (ListingType)`       | The type of transaction (e.g., Sale, Rent).      |                                         |
+| `propertyType`      | `Enum (PropertyType)`      | The category of the property.                    |                                         |
+| `rentalPrice`       | `Float`                    | The rental price of the property.                | Optional.                               |
+| **`paymentPeriod`** | **`Enum (PaymentPeriod)`** | **The frequency of the rental payment.**         | **NEW. Optional.**                      |
+| `salePrice`         | `Float`                    | The sale price of the property.                  | Optional.                               |
+| `maintenanceFee`    | `Float`                    | The monthly common area maintenance fee.         | Optional.                               |
+| `sizeSqft`          | `Int`                      | The size of the property in square feet.         |                                         |
+| `bedrooms`          | `Int`                      | The number of bedrooms.                          |                                         |
+| `bathrooms`         | `Int`                      | The number of bathrooms.                         |                                         |
+| `furnishingStatus`  | `Enum (Furnishing)`        | The furnishing level of the property.            |                                         |
+| **`latitude`**      | **`Float`**                | **The geographic latitude of the property.**     | **NEW. For maps & automation.**         |
+| **`longitude`**     | **`Float`**                | **The geographic longitude of the property.**    | **NEW. For maps & automation.**         |
+| `status`            | `Enum (PropertyStatus)`    | The current workflow status of the listing.      | Default: `PENDING`.                     |
+| `listedById`        | `Int`                      | The ID of the `PROPERTY_OWNER` who submitted it. | Foreign Key -> `Users.id`.              |
+| `projectId`         | `Int`                      | Links the property to its parent project.        | Foreign Key -> `Projects.id`. Optional. |
 
 ### 3.4. Table: `PropertyDocuments`
 
-Stores ownership documents for verification purposes.
+_(No changes from Version 2.0)_
+Stores ownership documents for verification.
 
 | Column Name          | Data Type                   | Description                                  | Notes                           |
 | :------------------- | :-------------------------- | :------------------------------------------- | :------------------------------ |
 | `id`                 | `Int`                       | Unique identifier for the document record.   | Primary Key, Auto-increment.    |
 | `propertyId`         | `Int`                       | Links the document to the property.          | Foreign Key -> `Properties.id`. |
-| `documentType`       | `Enum (DocumentType)`       | The type of document submitted.              | See Enum Definitions.           |
+| `documentType`       | `Enum (DocumentType)`       | The type of document submitted.              |                                 |
 | `fileUrl`            | `String`                    | The URL where the document file is stored.   |                                 |
 | `verificationStatus` | `Enum (VerificationStatus)` | The admin's verification status for the doc. | Default: `PENDING`.             |
 | `uploadedAt`         | `DateTime`                  | Timestamp of when the document was uploaded. | Auto-managed.                   |
 
-### 3.5. Table: `PropertyImages`
+### 3.5. Table: `PropertyImages`, `Amenities`, `PropertyAmenities`
 
-Stores the image gallery for each property.
+_(No changes from Version 2.0)_
 
-| Column Name    | Data Type | Description                                    | Notes                           |
-| :------------- | :-------- | :--------------------------------------------- | :------------------------------ |
-| `id`           | `Int`     | Unique identifier for each image.              | Primary Key, Auto-increment.    |
-| `propertyId`   | `Int`     | Links the image to the relevant property.      | Foreign Key -> `Properties.id`. |
-| `imageUrl`     | `String`  | The public URL of the image file.              |                                 |
-| `displayOrder` | `Int`     | The display order in the gallery (1, 2, 3...). | Optional, default: 0.           |
+### 3.6. Table: `Views`
 
-### 3.6. Table: `Amenities`
+**NEW TABLE**. Master table for all available property views.
 
-Master table for all available property amenities.
+| Column Name | Data Type | Description                           | Notes                                  |
+| :---------- | :-------- | :------------------------------------ | :------------------------------------- |
+| `id`        | `Int`     | Unique identifier for each view type. | Primary Key, Auto-increment.           |
+| `name`      | `String`  | The name of the view.                 | Unique. e.g., "City View", "Sea View". |
 
-| Column Name | Data Type | Description                          | Notes                          |
-| :---------- | :-------- | :----------------------------------- | :----------------------------- |
-| `id`        | `Int`     | Unique identifier for each amenity.  | Primary Key, Auto-increment.   |
-| `name`      | `String`  | The name of the amenity.             | Unique. e.g., "Swimming Pool". |
-| `icon`      | `String`  | The name or URL of the amenity icon. | Optional.                      |
+### 3.7. Table: `PropertyViews`
 
-### 3.7. Table: `PropertyAmenities`
-
-A join table for the many-to-many relationship between `Properties` and `Amenities`.
+**NEW TABLE**. A join table for the many-to-many relationship between `Properties` and `Views`.
 
 | Column Name  | Data Type | Description               | Notes                            |
 | :----------- | :-------- | :------------------------ | :------------------------------- |
 | `propertyId` | `Int`     | Links to `Properties.id`. | Part of a composite Primary Key. |
-| `amenityId`  | `Int`     | Links to `Amenities.id`.  | Part of a composite Primary Key. |
+| `viewId`     | `Int`     | Links to `Views.id`.      | Part of a composite Primary Key. |
 
-### 3.8. Table: `Reviews`
+### 3.8. Table: `FacilityCategories`
 
-Stores user-submitted reviews and ratings for properties.
+**NEW TABLE**. Master table for categories of nearby facilities.
 
-| Column Name  | Data Type  | Description                                 | Notes                           |
-| :----------- | :--------- | :------------------------------------------ | :------------------------------ |
-| `id`         | `Int`      | Unique identifier for each review.          | Primary Key, Auto-increment.    |
-| `propertyId` | `Int`      | The property being reviewed.                | Foreign Key -> `Properties.id`. |
-| `userId`     | `Int`      | The user who wrote the review.              | Foreign Key -> `Users.id`.      |
-| `rating`     | `Int`      | The rating given by the user.               | A value from 1 to 5.            |
-| `comment`    | `Text`     | The text content of the review.             | Optional.                       |
-| `createdAt`  | `DateTime` | Timestamp of when the review was submitted. | Auto-managed.                   |
+| Column Name | Data Type | Description                           | Notes                           |
+| :---------- | :-------- | :------------------------------------ | :------------------------------ |
+| `id`        | `Int`     | Unique identifier for each category.  | Primary Key, Auto-increment.    |
+| `name`      | `String`  | The name of the category.             | Unique. e.g., "Transportation". |
+| `icon`      | `String`  | The name or URL of the category icon. | Optional.                       |
 
-### 3.9. Table: `Favorites`
+### 3.9. Table: `NearbyFacilities`
 
-A join table to manage users' favorited properties (many-to-many relationship).
+**NEW TABLE**. Stores specific nearby facilities for a property, populated automatically via a third-party API.
 
-| Column Name  | Data Type | Description                      | Notes                            |
-| :----------- | :-------- | :------------------------------- | :------------------------------- |
-| `userId`     | `Int`     | Links to the user.               | Part of a composite Primary Key. |
-| `propertyId` | `Int`     | Links to the favorited property. | Part of a composite Primary Key. |
+| Column Name        | Data Type | Description                                | Notes                                   |
+| :----------------- | :-------- | :----------------------------------------- | :-------------------------------------- |
+| `id`               | `Int`     | Unique identifier for the facility record. | Primary Key, Auto-increment.            |
+| `propertyId`       | `Int`     | Links the facility to the property.        | Foreign Key -> `Properties.id`.         |
+| `categoryId`       | `Int`     | The category of the facility.              | Foreign Key -> `FacilityCategories.id`. |
+| `name`             | `String`  | The specific name of the facility.         | e.g., "Grand Indonesia Mall".           |
+| `distanceInMeters` | `Int`     | The distance from the property in meters.  |                                         |
 
-### 3.10. Table: `RentalAgreements`
+### 3.10. Table: `Reviews`, `Favorites`, `RentalAgreements`
 
-Stores data for each generated rental agreement (for Challenge 3).
-
-| Column Name       | Data Type                | Description                              | Notes                           |
-| :---------------- | :----------------------- | :--------------------------------------- | :------------------------------ |
-| `id`              | `Int`                    | Unique identifier for each agreement.    | Primary Key, Auto-increment.    |
-| `propertyId`      | `Int`                    | The property being rented.               | Foreign Key -> `Properties.id`. |
-| `tenantId`        | `Int`                    | The user who is the tenant.              | Foreign Key -> `Users.id`.      |
-| `ownerId`         | `Int`                    | The user who is the owner.               | Foreign Key -> `Users.id`.      |
-| `startDate`       | `DateTime`               | The start date of the rental period.     |                                 |
-| `endDate`         | `DateTime`               | The end date of the rental period.       |                                 |
-| `rentalAmount`    | `Float`                  | The agreed-upon rental amount.           |                                 |
-| `status`          | `Enum (AgreementStatus)` | The current status of the agreement.     | See Enum Definitions.           |
-| `generatedPdfUrl` | `String`                 | URL to the generated PDF agreement file. | Optional.                       |
+_(No changes from Version 2.0)_
 
 ---
 
 ## 4. Enum Type Definitions
 
-- **`Role`**:
-
-  - `PROPERTY_OWNER`: A user who lists and manages properties.
-  - `TENANT`: A user who is looking to rent properties.
-  - `ADMIN`: A user with moderation and administrative privileges.
-
-- **`ListingType`**:
-
-  - `SALE`
-  - `RENT`
-  - `BOTH`
-
-- **`PropertyStatus`**:
-
-  - `PENDING`: Awaiting admin approval.
-  - `APPROVED`: Live and visible to the public.
-  - `REJECTED`: Declined by an admin.
-  - `RENTED`: Currently off the market because it is rented.
-  - `SOLD`: Currently off the market because it has been sold.
-
-- **`DocumentType`**:
-
-  - `OWNERSHIP_CERTIFICATE`
-  - `TAX_RECORD`
-  - `UTILITY_BILL`
-
-- **`VerificationStatus`**:
-
-  - `PENDING`: Awaiting admin review.
-  - `VERIFIED`: Approved by an admin.
-  - `REJECTED`: Rejected by an admin.
-
+- **`Role`**: `PROPERTY_OWNER`, `TENANT`, `ADMIN`
+- **`ListingType`**: `SALE`, `RENT`, `BOTH`
+- **`PropertyStatus`**: `PENDING`, `APPROVED`, `REJECTED`, `RENTED`, `SOLD`
+- **`DocumentType`**: `OWNERSHIP_CERTIFICATE`, `TAX_RECORD`, `UTILITY_BILL`
+- **`VerificationStatus`**: `PENDING`, `VERIFIED`, `REJECTED`
 - **`PropertyType`**: `APARTMENT`, `HOUSE`, `PENTHOUSE`, `STUDIO`, `COMMERCIAL`
 - **`Furnishing`**: `UNFURNISHED`, `PARTIALLY_FURNISHED`, `FULLY_FURNISHED`
+- **`PaymentPeriod`**: **NEW ENUM**. `MONTHLY`, `QUARTERLY`, `BI_ANNUALLY`, `YEARLY`
 - **`AgreementStatus`**: `ACTIVE`, `EXPIRED`, `TERMINATED`
