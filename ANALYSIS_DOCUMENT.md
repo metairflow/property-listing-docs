@@ -1,118 +1,109 @@
-# Implementation Roadmap: RENTVERSE Project
+# System Analysis and Design Document: RENTVERSE Project
 
-**Version: 2.0**
-**Date: September 9, 2025**
-**Status: Approved for Development**
-
----
-
-## 1. Introduction
-
-### 1.1. Document Purpose
-
-This document outlines the strategic, phased implementation plan for the RENTVERSE project. It breaks down the development process into logical stages, each with clear objectives and deliverables. This roadmap will guide the development team from the initial setup to the final, feature-complete application.
-
-### 1.2. Development Methodology
-
-The project will follow an iterative, MVP-first (Minimum Viable Product) approach. We will build and stabilize the core functionality first before layering on more advanced and auxiliary features.
+**Version: 2.3**
+**Date: September 10, 2025**
+**Status: Approved for Implementation**
 
 ---
 
-## 2. Phased Implementation Plan
+## 1. Project Summary
 
-### Phase 1: MVP - Core Listing Workflow
+### 1.1. Purpose
 
-**Goal**: To build the absolute essential functionality allowing a `PROPERTY_OWNER` to register, log in, and successfully submit a new property listing with an ownership document.
+Project RENTVERSE aims to build a comprehensive, integrated property platform. The application unifies three core functionalities:
 
-**Key Tasks**:
+1.  **Property Listing Management**: A streamlined workflow for property owners to list properties, including a robust verification and approval process for admins.
+2.  **Smart Price Simulator**: A real-time, AI-driven tool to provide data-backed rental price recommendations.
+3.  **Automated Agreement Generation**: A system to automatically generate formal rental agreement documents.
 
-1.  **Project Setup**:
+### 1.2. Proposed Architecture
 
-    - Establish repositories for each service (`frontend`, `core-service`, `prediction-service`).
-    - Initialize the `Core Service` (Express.js) and `Frontend` (Next.js) projects.
-    - Configure Docker and Docker Compose for a unified local development environment.
-
-2.  **`Core Service` Development (Backend)**:
-
-    - Implement the full Version 2.0 database schema using Prisma.
-    - Develop the following core API endpoints:
-      - User registration and login (`/auth/register`, `/auth/login`).
-      - Secure file upload endpoint (`/uploads/signed-url`).
-      - Property submission (`POST /properties`), including logic to create entries in `Properties` and `PropertyDocuments`.
-      - Fetch projects for auto-fill (`GET /projects`).
-
-3.  **`Frontend` Development (UI)**:
-    - Build the Registration and Login pages based on the Figma designs.
-    - Implement the full Property Submission Form component, including the two-step file upload process.
-    - Integrate the form with the backend APIs.
-    - Implement client-side state management for user authentication and form data.
-
-**Expected Outcome for Phase 1**: A functional application where a property owner can create an account and submit a complete property listing for admin review.
+The application will be built on a **hybrid microservices architecture**. This model balances initial development speed with long-term scalability by consolidating core business logic into a single `Core Service`, while isolating specialized, resource-intensive tasks (like price prediction and third-party API interactions) into dedicated services or background jobs.
 
 ---
 
-### Phase 2: Admin Approval and Verification Workflow
+## 2. Functional Analysis (User Stories)
 
-**Goal**: To empower the `ADMIN` role with the tools necessary to moderate and verify new property listings.
+This section details the application's features from the perspective of each user role, reflecting the full scope of the redesigned application.
 
-**Key Tasks**:
+### 2.1. Public User (Unregistered)
 
-1.  **`Core Service` Updates (Backend)**:
+- **As a public user**, I want to search and filter properties by location, type, price, and other attributes, so I can find relevant listings quickly.
+- **As a public user**, I want to view a property's detail page with a photo gallery, full description, amenities, property views, and a map of nearby facilities, so I can evaluate it thoroughly.
 
-    - Implement role-based authorization middleware to protect admin-only endpoints.
-    - Develop the following admin-specific API endpoints:
-      - Fetch pending properties (`/admin/properties/pending`).
-      - Update property status (`PATCH /admin/properties/{id}/status`).
-      - _(Future)_ Update document verification status.
+### 2.2. Property Owner (Role: `PROPERTY_OWNER`)
 
-2.  **`Frontend` Updates (UI)**:
-    - Build the Admin Dashboard page, protected by role-based access.
-    - Create a detailed "Review" page where an admin can see all property details and view the uploaded ownership document.
-    - Implement the functionality for the "Approve" and "Reject" buttons.
+- **As a property owner**, I want to register for an account and log in, so I can access my property management dashboard.
+- **As a property owner**, I want to fill out a comprehensive form to list a new property for sale, for rent, or both.
+- **As a property owner**, I want to use an **auto-fill** feature based on existing project data to speed up the submission process.
+- **As a property owner**, I want to receive a **real-time price suggestion** from a price simulator while filling out the form, so I can set a competitive price.
+- **As a property owner**, I want to upload an **ownership document** during submission, so I can get my listing verified and build trust.
+- **As a property owner**, I want to view a list of all my submitted properties and their current status (`Pending`, `Approved`, `Rejected`), so I can track my portfolio.
+- **As a property owner**, I want to update my personal profile information, including my phone number, country, and profile picture.
 
-**Expected Outcome for Phase 2**: A complete, end-to-end listing and approval workflow. Admins can now effectively manage the quality of content on the platform.
+### 2.3. Tenant (Role: `TENANT`)
 
----
+- **As a tenant**, I want to register for an account and log in, so I can interact with the platform's features.
+- **As a tenant**, I want to save properties to a **"Favorites"** list, so I can easily revisit them later.
+- **As a tenant**, I want to submit a **review and rating** for a property, so I can share my experience with the community.
+- **As a tenant**, I want to update my personal profile information.
 
-### Phase 3: Tenant Engagement Features
+### 2.4. Admin (Role: `ADMIN`)
 
-**Goal**: To build the features that allow `TENANT` users to interact with the platform, making it a dynamic marketplace.
-
-**Key Tasks**:
-
-1.  **`Core Service` Updates (Backend)**:
-
-    - Develop API endpoints for:
-      - Adding and removing properties from favorites (`POST` & `DELETE /properties/{id}/favorite`).
-      - Submitting reviews (`POST /properties/{id}/reviews`).
-      - Fetching public, `APPROVED` properties (`GET /properties`).
-
-2.  **`Frontend` Updates (UI)**:
-    - Build the public-facing Homepage and Property Search/Listing pages.
-    - Create the detailed Property View page.
-    - Implement the "Add to Favorites" button and the "My Favorites" page in the user dashboard.
-    - Implement the review submission form and the review display section on property pages.
-
-**Expected Outcome for Phase 3**: The platform is now fully interactive for tenants, with core features for browsing, saving, and reviewing properties.
+- **As an admin**, I want to log in to a secure, dedicated dashboard.
+- **As an admin**, I want to view a queue of all properties awaiting approval.
+- **As an admin**, I want to review the details of each submission, including the **uploaded ownership document**, to ensure quality and authenticity.
+- **As an admin**, I want to **approve** or **reject** property listings to control the content published on the platform.
 
 ---
 
-### Phase 4: Integration of Advanced Services
+## 3. System Architecture
 
-**Goal**: To integrate the specialized microservices that complete the full vision of the RENTVERSE platform (Challenge 2 & 3).
+The system consists of the following key components:
 
-**Key Tasks**:
+- **Frontend (Next.js)**: A single, responsive user interface for all user roles.
+- **API Gateway (Kong)**: The single entry point for all API requests, handling routing, security, and rate limiting.
+- **Core Service (Express.js)**: A monolithic service handling the main business logic for Users, Properties, and Documents. This service will also manage background jobs for tasks like discovering nearby facilities.
+- **Prediction Service (FastAPI)**: An isolated microservice dedicated to handling AI-powered price predictions.
 
-1.  **`Prediction Service` Development (Backend)**:
+---
 
-    - Initialize the FastAPI (Python) project.
-    - Train a baseline Machine Learning model for price prediction.
-    - Develop and deploy the `/predict` API endpoint.
+## 4. Database Design
 
-2.  **`Core Service` & `Frontend` Integration**:
-    - Configure the API Gateway (Kong) to route traffic to all services.
-    - Integrate the `/predict` API call into the frontend's Property Submission Form, including a _debounce_ mechanism.
-    - Add logic to the `Core Service` for `RentalAgreement` generation, including PDF creation (e.g., via Puppeteer).
-    - Build the UI on the frontend for initiating and managing rental agreements.
+The database will use **PostgreSQL**, managed via the **Prisma ORM**. The design has been updated to support all new features.
 
-**Expected Outcome for Phase 4**: All three core challenges are fully implemented and integrated, resulting in a feature-complete application ready for its first major release.
+### 4.1. Table Schema Summary
+
+The schema includes the following key tables:
+| Table Name | Purpose |
+| :--- | :--- |
+| `Users` | Stores data for all users (`PROPERTY_OWNER`, `TENANT`, `ADMIN`). |
+| `Projects` | Master data for property developments (for auto-fill). |
+| `Properties` | Core table for individual property listings. |
+| `PropertyDocuments`| Stores and tracks verification of ownership documents. |
+| `Reviews` | Stores user-submitted ratings and comments. |
+| `Favorites` | Manages the relationship between users and their favorited properties. |
+| `Views` | Master table for available property views (e.g., "City View"). |
+| `PropertyViews` | Links properties to their respective views. |
+| `FacilityCategories`| Master table for categories of nearby facilities. |
+| `NearbyFacilities`| Stores nearby points of interest for a property, populated automatically. |
+| `RentalAgreements`| Stores data for generated rental contracts. |
+
+---
+
+## 5. Technology Stack
+
+| Component                   | Proposed Technology                                   |
+| :-------------------------- | :---------------------------------------------------- |
+| **Frontend**                | Next.js (React), Tailwind CSS                         |
+| **API Gateway**             | Kong                                                  |
+| **Core Service**            | Node.js, Express.js, Prisma                           |
+| **Prediction Service**      | Python, FastAPI, Scikit-learn                         |
+| **Geospatial API**          | Google Places API or OpenStreetMap (via Overpass API) |
+| **Database**                | PostgreSQL                                            |
+| **Containerization**        | Docker, Docker Compose                                |
+| **Deployment (Production)** | Kubernetes                                            |
+
+---
+
+_This document supersedes all previous versions and serves as the primary high-level guide for the project._
